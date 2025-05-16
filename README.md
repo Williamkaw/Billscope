@@ -1,5 +1,4 @@
 # Billscope
-
 #!/usr/bin/env python3
 import re
 import os
@@ -36,12 +35,20 @@ def run_single_url_scraper(url, output_file):
         print(f"\n🌐 Fetching {url} ...")
         html = read_html(url)
         emails = extract_emails(html)
+
+        if emails:
+            print(f"✅ Found {len(emails)} emails from {url}:")
+            for email in emails:
+                print(f"   📧 {email}")
+        else:
+            print(f"⚠️ No emails found on {url}")
+
         os.makedirs(os.path.dirname(output_file), exist_ok=True)
         with open(output_file, 'a', newline='') as f:
             writer = csv.writer(f)
             for email in emails:
                 writer.writerow([email, url])
-        print(f"✅ Found {len(emails)} emails from {url}")
+
         print(f"📁 Saved to {output_file}")
     except Exception as e:
         print(f"❌ Error fetching {url}: {e}")
