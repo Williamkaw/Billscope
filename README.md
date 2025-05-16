@@ -1,4 +1,5 @@
 # Billscope
+
 #!/usr/bin/env python3
 import re
 import os
@@ -27,35 +28,23 @@ def read_html(url):
     with urllib.request.urlopen(req, timeout=10) as res:
         return res.read().decode()
 
-def run_email_scraper(input_file, output_file):
-    start_time = time.time()
-    results = []
+def run_single_url_scraper(url, output_file):
+    if not url.startswith("http"):
+        url = "https://" + url
 
-    if not os.path.exists(input_file):
-        print(f"❌ Input file not found: {input_file}")
-        return
-
-    with open(input_file, 'r') as infile:
-        urls = [line.strip() for line in infile.readlines() if line.strip()]
-
-    for i, url in enumerate(urls, 1):
-        try:
-            html = read_html(url)
-            emails = extract_emails(html)
-            print(f"{i}. {url} → {len(emails)} emails")
+    try:
+        print(f"\n🌐 Fetching {url} ...")
+        html = read_html(url)
+        emails = extract_emails(html)
+        os.makedirs(os.path.dirname(output_file), exist_ok=True)
+        with open(output_file, 'a', newline='') as f:
+            writer = csv.writer(f)
             for email in emails:
-                results.append((email, url))
-        except Exception as e:
-            print(f"{i}. {url} → Error: {e}")
-
-    os.makedirs(os.path.dirname(output_file), exist_ok=True)
-    with open(output_file, 'w', newline='') as f:
-        writer = csv.writer(f)
-        writer.writerow(['Email', 'Source URL'])
-        writer.writerows(results)
-
-    print(f"✅ Saved {len(results)} emails to {output_file}")
-    print(f"⏱️ Time taken: {round(time.time() - start_time, 2)} seconds")
+                writer.writerow([email, url])
+        print(f"✅ Found {len(emails)} emails from {url}")
+        print(f"📁 Saved to {output_file}")
+    except Exception as e:
+        print(f"❌ Error fetching {url}: {e}")
 
 # ------------------ USERNAME SCANNER FUNCTIONS ------------------ #
 
@@ -75,16 +64,15 @@ def scan_username(username):
 
 def main():
     os.makedirs("results/sherlock_results", exist_ok=True)
-    print("\n🔍 OSINT Toolkit")
-    print("1. Extract emails from URLs")
+    print("\n🔍 BillScope OSINT Toolkit")
+    print("1. Extract emails from a URL")
     print("2. Scan usernames across social media")
     print("3. Exit")
     choice = input("\nEnter your choice: ").strip()
 
     if choice == '1':
-        input_file = input("Enter path to URL list (e.g. urls.txt): ").strip()
-        output_file = "results/emails.csv"
-        run_email_scraper(input_file, output_file)
+        url = input("Enter a URL (e.g. https://example.com): ").strip()
+        run_single_url_scraper(url, "results/emails.csv")
     elif choice == '2':
         username = input("Enter the username to search: ").strip()
         scan_username(username)
@@ -93,4 +81,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
